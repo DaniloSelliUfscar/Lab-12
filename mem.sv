@@ -1,4 +1,4 @@
-module mem #(parameter FILENAME = "memfile.hex")
+module mem #(parameter FILENAME = "riscv.hex")
           (input  logic        clk, we,
            input  logic [31:0] a, wd,
            output logic [31:0] rd);
