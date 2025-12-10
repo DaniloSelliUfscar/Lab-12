@@ -62,10 +62,14 @@ module top #(parameter VGA_BITS = 4) (
   power_on_reset por(clk, reset);
     
   // microprocessor
-  riscvmulti cpu(clk, reset, addr, writedata, memwrite, readdata, mem_rstrb, mem_wmask);
+  riscvpipeline cpu(clk, reset, pc, instr, addr, writedata, memwrite, readdata);
 
   // memory 
-  mem ram(clk, memwrite, addr, writedata, readdata, 'h200 + vaddr, vdata, isRAM & mem_rstrb, {4{isRAM}}&mem_wmask, VGA_CLK);
+   // instructions memory 
+  mem instr_mem(.clk(clk), .a(pc), .rd(instr));
+
+  // data memory 
+  mem data_mem(clk, memwrite, addr, writedata, readdata);
 
   // VGA controller
   vga gpu(VGA_CLK, reset, VGA_HS, VGA_VS, VGA_DA, vaddr);

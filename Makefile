@@ -10,7 +10,7 @@ VIEWER=code
 # https://drom.io/vcd/?github=menotti/up1/master/processor/dump.vcd
 
 # Toolchain
-CROSS   = riscv64-unknown-elf
+CROSS   = riscv64-linux-gnu
 AS      = $(CROSS)-as
 LD      = $(CROSS)-ld
 OBJCOPY = $(CROSS)-objcopy
@@ -18,14 +18,16 @@ OBJDUMP = $(CROSS)-objdump
 
 # Arquivos
 LDS    = riscv.ld
+#SRC    = static.asm
 SRC    = riscv.asm
+#SRC    = increment.asm
+
 OBJ    = $(SRC:.asm=.o)
 ELF    = riscv.elf
 LST    = riscv.lst
-HEX_TEXT = text.hex
-HEX_DATA = data.hex
+HEX	   = riscv.hex
 
-all: $(HEX_TEXT) $(HEX_DATA) $(LST) simul
+all: $(HEX) $(LST) simul
 
 # Monta o assembly (RV32)
 $(OBJ): $(SRC)
@@ -35,16 +37,9 @@ $(OBJ): $(SRC)
 $(ELF): $(OBJ) $(LDS)
 	$(LD) -m elf32lriscv -T $(LDS) -o $@ $<
 
-# Gera HEX de instruções (.text) (memória Harvard)
-$(HEX_TEXT): $(ELF)
-	$(OBJCOPY) -O verilog --verilog-data-width=4 \
-	--only-section=.text $< $@
-
-# Gera HEX de dados (.data + .bss) (memória Harvard)
-$(HEX_DATA): $(ELF)
-	$(OBJCOPY) -O verilog --verilog-data-width=4 \
-	--change-section-lma .data=0x0 --change-section-lma .bss=0x0 \
-	--only-section=.data --only-section=.bss $< $@
+# Gera HEX de instruções + dados (.text + .data + .bss) (memória von Neumann)
+$(HEX): $(ELF)
+	$(OBJCOPY) -O verilog --verilog-data-width=4 $< $@
 
 # Gera listagem com instruções + dados
 $(LST): $(ELF)
@@ -52,10 +47,10 @@ $(LST): $(ELF)
 	@echo "Listagem gerada em $(LST)"
 
 clean:
-	rm -f $(OBJ) $(ELF) $(HEX) $(HEX_TEXT) $(HEX_DATA) $(LST) *.out dump.vcd dump.log riscv.asm
+	rm -f $(OBJ) $(ELF) $(HEX) $(LST) *.out dump.vcd dump.log
 
-simul: *.sv ../*.sv
-	$(CC) -D$(VERSION) $(FLAGS) ../*.sv *.sv 
+simul: *.sv
+	$(CC) -DSIM $(FLAGS) *.sv 
 # 	vvp a.out | grep -v xxxx | sort > dump.log
 # 	vvp a.out > dump.log
 	vvp a.out 
