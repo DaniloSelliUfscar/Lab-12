@@ -64,34 +64,20 @@ module top #(parameter VGA_BITS = 4) (
   // microprocessor
   riscvpipeline cpu(clk, reset, pc, instr, addr, writedata, memwrite, readdata);
 
-/*
-  // memory 
-   // instructions memory 
-  mem instr_mem(.clk(clk), .a(pc), .rd(instr));
+mem ram (
+  .clk(clk),
 
-  // data memory 
-  mem data_mem(clk, memwrite, addr, writedata, readdata);
+  // Porta A — CPU
+  .we(isRAM & memwrite),   // só escreve se for RAM
+  .a(addr),
+  .wd(writedata),
+  .rd(readdata),
+  .mem_wmask({4{isRAM}} & mem_wmask),
 
-*/
-
-// instruções: usa riscv.hex normalmente
-mem #("riscv.hex") instr_mem (
-    .clk(clk), 
-    .a(pc), 
-    .rd(instr)
+  // Porta B — VGA
+  .va('h200 + vaddr),
+  .vd(vdata)
 );
-
-// dados: não inicializa (memória zerada)
-mem #("") data_mem (
-    .clk(clk), 
-    .we(memwrite), 
-    .a(addr), 
-    .wd(writedata), 
-    .rd(readdata)
-);
-
-// memory 
-//  mem ram(clk, memwrite, addr, writedata, readdata, /* 'h200 + */ vaddr, vdata, isRAM & mem_rstrb, {4{isRAM}}&mem_wmask, VGA_CLK);
 
 
   // VGA controller
